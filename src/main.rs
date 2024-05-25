@@ -6,11 +6,11 @@ mod database;
 mod routes;
 mod utils;
 mod types;
-use crate::routes::gql::graphql;
-use crate::routes::version::no;
+mod schemas;
 
 //gql
-mod schemas;
+use crate::routes::gql::graphql;
+use crate::routes::version::no;
 use crate::database::connection::connect;
 use crate::schemas::schema::create_schema;
 use crate::types::apperror::{AppError,Result};
