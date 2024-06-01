@@ -1,5 +1,7 @@
 use actix_cors::Cors;
 use actix_web::{middleware, web, App, HttpServer};
+use dotenv::dotenv;
+use routes::playground::graphql_playground;
 
 // local
 mod database;
@@ -19,14 +21,15 @@ use crate::utils::context::Context;
 //server function
 #[actix_web::main]
 async fn main() -> Result<()> {
+    dotenv().ok();
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
-
+    let port= std::env::var("HTTP_PORT").expect("HTTP_PORT must be set.").parse::<u16>().unwrap();
     let circle_db = connect().await?;
     circle_db.use_ns("circle").use_db("circle").await?;
     let context = Context { db: circle_db };
     log::info!("DataBase is running 🚀");
-    log::info!("Starting on Port: http://localhost:{}", 8080);
-    log::info!("Graphql running on: http://localhost:{}/api", 8080);
+    log::info!("Starting on Port: http://localhost:{}", port);
+    log::info!("Graphql running on: http://localhost:{}/api", port);
 
     HttpServer::new(move || {
         App::new()
@@ -35,12 +38,12 @@ async fn main() -> Result<()> {
                 std::sync::Arc::new(create_schema()).clone(),
             ))
             .service(graphql)
-            // .service(graphql_playground)
+            .service(graphql_playground)
             .service(no)
             .wrap(Cors::permissive())
             .wrap(middleware::Logger::default())
     })
-    .bind(("localhost", 8080))?
+    .bind(("localhost", port))?
     .run()
     .await
     .map_err(AppError::from)
